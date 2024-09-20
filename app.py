@@ -1,9 +1,6 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from google.oauth2 import service_account
-import gspread
 import sqlalchemy
 
 # Session state for collaborative purposes
@@ -11,18 +8,10 @@ if 'data' not in st.session_state:
     st.session_state['data'] = None
 
 # Title of the Streamlit App
-st.title("Advanced Streamlit App with Sourcetable Features")
+st.title("Advanced Streamlit App with Sourcetable Features (No Google Sheets)")
 
 # Sidebar for Data Integration and Transformations
 st.sidebar.header("Data Source & Options")
-
-# Google Sheets Integration
-def connect_to_google_sheets(sheet_url, credentials_file):
-    creds = service_account.Credentials.from_service_account_file(credentials_file)
-    gc = gspread.authorize(creds)
-    sheet = gc.open_by_url(sheet_url)
-    worksheet = sheet.get_worksheet(0)
-    return pd.DataFrame(worksheet.get_all_records())
 
 # Database Integration
 def connect_to_database(db_url, query):
@@ -40,19 +29,13 @@ if etl_sync:
     st.write(etl_status)
 
 # Data Source Selection
-data_source = st.sidebar.selectbox("Select Data Source", ["Upload CSV", "Google Sheets", "SQL Database"])
+data_source = st.sidebar.selectbox("Select Data Source", ["Upload CSV", "SQL Database"])
 
 # Handling different data sources
 if data_source == "Upload CSV":
     uploaded_file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
     if uploaded_file is not None:
         st.session_state['data'] = pd.read_csv(uploaded_file)
-
-elif data_source == "Google Sheets":
-    sheet_url = st.sidebar.text_input("Google Sheets URL")
-    credentials_file = st.sidebar.file_uploader("Upload Google Credentials", type=["json"])
-    if sheet_url and credentials_file:
-        st.session_state['data'] = connect_to_google_sheets(sheet_url, credentials_file)
 
 elif data_source == "SQL Database":
     db_url = st.sidebar.text_input("Database URL")
