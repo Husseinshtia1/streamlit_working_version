@@ -1,4 +1,6 @@
+
 streamlit
 pandas
 plotly
 sqlalchemy
+openpyxl  # for exporting to Excel
