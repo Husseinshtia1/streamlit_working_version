@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -8,7 +9,7 @@ if 'data' not in st.session_state:
     st.session_state['data'] = None
 
 # Title of the Streamlit App
-st.title("Advanced Streamlit App with Sourcetable Features (No Google Sheets)")
+st.title("Advanced Streamlit App with Dynamic Dashboards")
 
 # Sidebar for Data Integration and Transformations
 st.sidebar.header("Data Source & Options")
@@ -18,6 +19,13 @@ def connect_to_database(db_url, query):
     engine = sqlalchemy.create_engine(db_url)
     with engine.connect() as connection:
         return pd.read_sql_query(query, connection)
+
+# Data Export
+def export_data(data, export_format):
+    if export_format == 'CSV':
+        return data.to_csv(index=False)
+    elif export_format == 'Excel':
+        return data.to_excel("exported_data.xlsx", index=False)
 
 # Simulated ETL Process
 def simulated_etl():
@@ -52,10 +60,19 @@ if st.session_state['data'] is not None:
     st.write("### Summary Statistics")
     st.write(st.session_state['data'].describe())
 
-    # Pivot Table
+    # Pivot Table and Grouping
+    st.write("### Pivot Table and Grouping")
+    group_by_column = st.selectbox("Select Column to Group By", st.session_state['data'].columns)
+    aggregation_method = st.selectbox("Aggregation Method", ["sum", "mean", "count"])
+    
+    if aggregation_method == "sum":
+        pivot_table = st.session_state['data'].groupby(group_by_column).sum()
+    elif aggregation_method == "mean":
+        pivot_table = st.session_state['data'].groupby(group_by_column).mean()
+    else:
+        pivot_table = st.session_state['data'].groupby(group_by_column).count()
+        
     st.write("### Pivot Table")
-    pivot_column = st.selectbox("Select Column for Pivot", st.session_state['data'].columns)
-    pivot_table = st.session_state['data'].groupby(pivot_column).sum()
     st.dataframe(pivot_table)
 
     # Correlation Heatmap
@@ -64,7 +81,7 @@ if st.session_state['data'] is not None:
     fig = px.imshow(corr, text_auto=True, aspect="auto", title="Correlation Matrix")
     st.plotly_chart(fig)
 
-    # Scatter Plot
+    # Dynamic Scatter Plot
     st.write("### Scatter Plot")
     x_column = st.selectbox("Select X-axis", st.session_state['data'].columns)
     y_column = st.selectbox("Select Y-axis", st.session_state['data'].columns)
@@ -74,8 +91,9 @@ if st.session_state['data'] is not None:
 
     # Export Data
     st.write("### Export Data")
-    if st.button("Export Data as CSV"):
-        st.session_state['data'].to_csv('exported_data.csv')
-        st.write("Data exported successfully.")
+    export_format = st.selectbox("Select Export Format", ["CSV", "Excel"])
+    if st.button("Export Data"):
+        export_data(st.session_state['data'], export_format)
+        st.write(f"Data exported successfully as {export_format}.")
 else:
     st.write("Please select or upload a data source.")
